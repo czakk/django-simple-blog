@@ -2,6 +2,6 @@
 {% block title %}Home{% endblock %}
 {% block content %}
     {% for post in posts %}
-         <h2>{{ post.title }}</h2>
+         <a href="{{ post.get_absolute_url }}"><h2>{{ post.title }}</h2></a>
     {% endfor %}
 {% endblock %}

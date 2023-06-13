@@ -7,4 +7,4 @@ from .models import Post
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    fields = ['author', 'title', 'slug']
+    fields = ['author', 'title', 'slug', 'status']

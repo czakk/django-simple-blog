@@ -1,10 +1,13 @@
 from django.contrib import admin
 from django.urls import path
-from .views import homepage
+
+from . import views
+
 
 app_name = 'blog'
 
 
 urlpatterns = [
-    path('', homepage, name='homepage'),
+    path('', views.homepage, name='homepage'),
+    path('<int:id>/<slug:slug>/', views.post_detail, name='post_detail'),
 ]

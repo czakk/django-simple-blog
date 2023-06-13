@@ -30,20 +30,40 @@ class TestHomePage(TestCase):
         # homepage should display only 5 posts per page
         testing_utils.create_posts(8, testing_utils.create_user_john())
         response = self.client.get('')
-        self.assertNotContains(response, 'Test 1')
-        self.assertNotContains(response, 'Test 2')
-        self.assertNotContains(response, 'Test 3')
-        self.assertContains(response, 'Test 4')
-        self.assertContains(response, 'Test 5')
-        self.assertContains(response, 'Test 6')
-        self.assertContains(response, 'Test 7')
-        self.assertContains(response, 'Test 8')
+        for i in range(1, 4):
+            self.assertNotContains(response, f'Test {i}')
+        for i in range(4, 9):
+            self.assertContains(response, f'Test {i}')
+
         response = self.client.get('', {'page': 2})
-        self.assertContains(response, 'Test 1')
-        self.assertContains(response, 'Test 2')
-        self.assertContains(response, 'Test 3')
-        self.assertNotContains(response, 'Test 4')
-        self.assertNotContains(response, 'Test 5')
-        self.assertNotContains(response, 'Test 6')
-        self.assertNotContains(response, 'Test 7')
-        self.assertNotContains(response, 'Test 8')
+
+        for i in range(1, 4):
+            self.assertContains(response, f'Test {i}')
+        for i in range(4, 9):
+            self.assertNotContains(response, f'Test {i}')
+
+class TestPostDetail(TestCase):
+    def setUp(self):
+        self.user = testing_utils.create_user_john()
+        self.post = Post.objects.create(title='Test 1', author=self.user, status='published')
+
+    def test_is_created_post_is_published(self):
+        self.assertEquals(self.post, Post.objects.first())
+
+    def test_can_get_detail_page(self):
+        response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
+        self.assertEquals(response.status_code, 200)
+
+    def test_detail_page_return_404_when_post_is_pending(self):
+        pending_post = Post.objects.create(title='Test Pending Post', author=self.user)
+        response = self.client.get(f'/{pending_post.id}/{pending_post.slug}/')
+        self.assertEquals(response.status_code, 404)
+    def test_detail_page_contains_post(self):
+        response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
+        self.assertContains(response, self.post.title)
+        self.assertContains(response, self.post.created.strftime('%d-%m-%Y %H:%M'))
+        self.assertContains(response, self.post.text)
+
+    def test_is_detail_page_using_post_detail_template(self):
+        response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
+        self.assertTemplateUsed(response, 'blog/post/detail.html')
