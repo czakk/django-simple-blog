@@ -1,7 +1,6 @@
 import blog.tests.testing_utils as testing_utils
 import unittest
 
-from django.contrib.auth.models import User
 from blog.models import Post
 from django.test import TestCase
 
@@ -10,13 +9,14 @@ from django.test import TestCase
 
 
 class TestHomePage(TestCase):
+    def setUp(self):
+        self.user = testing_utils.create_user_john()
     def test_user_can_access_homepage(self):
         response = self.client.get('')
         self.assertEquals(response.status_code, 200)
 
     def test_post_list_on_homepage(self):
-        user = testing_utils.create_user_john()
-        testing_utils.create_posts(3, user)
+        testing_utils.create_posts(3, self.user)
         response = self.client.get('')
         self.assertContains(response, 'Test 1')
         self.assertContains(response, 'Test 2')
@@ -28,7 +28,7 @@ class TestHomePage(TestCase):
 
     def test_pagination_on_homepage(self):
         # homepage should display only 5 posts per page
-        testing_utils.create_posts(8, testing_utils.create_user_john())
+        testing_utils.create_posts(8, self.user)
         response = self.client.get('')
         for i in range(1, 4):
             self.assertNotContains(response, f'Test {i}')
@@ -41,6 +41,13 @@ class TestHomePage(TestCase):
             self.assertContains(response, f'Test {i}')
         for i in range(4, 9):
             self.assertNotContains(response, f'Test {i}')
+
+    def test_homepage_displays_only_published_posts(self):
+        Post.objects.create(title='Published post', author=self.user, status='published')
+        Post.objects.create(title='Pending post', author=self.user)
+        response = self.client.get('')
+        self.assertContains(response, 'Published post')
+        self.assertNotContains(response, 'Pending pos')
 
 class TestPostDetail(TestCase):
     def setUp(self):

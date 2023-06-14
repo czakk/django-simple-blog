@@ -36,3 +36,27 @@ class Post(models.Model):
     def get_absolute_url(self):
         return reverse('blog:post_detail', args=[self.id,
                                                  self.slug])
+
+
+class Comment(models.Model):
+    ratings = (
+        (5, '5'),
+        (4, '4'),
+        (3, '3'),
+        (2, '2'),
+        (1, '1')
+    )
+    post = models.ForeignKey(Post,
+                             on_delete=models.CASCADE,
+                             related_name='comments')
+    author = models.CharField(max_length=32)
+    text = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
+    rating = models.PositiveSmallIntegerField(choices=ratings, default=5)
+
+    class Meta:
+        ordering = ('created', )
+
+    def __str__(self):
+        return f'Comment for {self.post} by {self.author}'

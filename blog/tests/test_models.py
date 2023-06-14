@@ -3,7 +3,7 @@ import unittest
 
 from django.test import TestCase
 from django.contrib.auth.models import User
-from blog.models import Post
+from blog.models import Post, Comment
 
 
 class TestPost(TestCase):
@@ -28,3 +28,12 @@ class TestPost(TestCase):
         post = Post.objects.create(title='Test Title', author=self.user)
         self.assertEquals(post.get_absolute_url(), '/1/test-title/')
 
+
+class TestComment(TestCase):
+    def setUp(self):
+        self.user = testing_utils.create_user_john()
+        self.post = Post.objects.create(title='Post with comments', author=self.user, status='published')
+
+    def test_post_related_comments(self):
+        comment = Comment.objects.create(post=self.post, author='Adam', text='Test Comment', rating=5)
+        self.assertEquals(comment, self.post.comments.first())

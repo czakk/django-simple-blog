@@ -2,11 +2,12 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 
+from .forms import CommentForm
 from .models import Post
 
 
 def homepage(request):
-    posts = Post.objects.all()
+    posts = Post.objects.all().filter(status='published')
 
     paginator = Paginator(posts, 5)
     page = request.GET.get('page')
@@ -24,6 +25,10 @@ def homepage(request):
 
 def post_detail(request, id, slug):
     post = get_object_or_404(Post, id=id, slug=slug, status='published')
+    if request.method == 'GET':
+        form = CommentForm()
+
     return render(request,
                   'blog/post/detail.html',
-                  {'post': post})
+                  {'post': post,
+                   'form': form})
