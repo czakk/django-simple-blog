@@ -1,6 +1,7 @@
+from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 
 from .forms import CommentForm
 from .models import Post
@@ -25,10 +26,22 @@ def homepage(request):
 
 def post_detail(request, id, slug):
     post = get_object_or_404(Post, id=id, slug=slug, status='published')
-    if request.method == 'GET':
+    new_comment = None
+
+    if request.method == 'POST':
+        form = CommentForm(data=request.POST)
+
+        if form.is_valid():
+            new_comment = form.save(commit=False)
+            new_comment.post = post
+            new_comment.save()
+            messages.success(request, 'Your comment has been added.')
+            return redirect(post)
+    else:
         form = CommentForm()
 
     return render(request,
                   'blog/post/detail.html',
                   {'post': post,
-                   'form': form})
+                   'form': form,
+                   'new_comment': new_comment})

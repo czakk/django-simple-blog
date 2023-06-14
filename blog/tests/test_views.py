@@ -1,7 +1,9 @@
 import blog.tests.testing_utils as testing_utils
 import unittest
 
-from blog.models import Post
+from blog.models import Post, Comment
+from blog.forms import CommentForm
+
 from django.test import TestCase
 
 
@@ -74,3 +76,55 @@ class TestPostDetail(TestCase):
     def test_is_detail_page_using_post_detail_template(self):
         response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
         self.assertTemplateUsed(response, 'blog/post/detail.html')
+
+    def test_comment_display_on_post_detail(self):
+        comment = Comment.objects.create(post=self.post, author='Jack', text='Good post', rating=4)
+        response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
+        self.assertContains(response, f'Created {comment.created.strftime("%d-%m-%Y %H:%M")} by {comment.author}')
+        self.assertContains(response, comment.text)
+
+    def test_comments_display_on_post_detail(self):
+        Comment.objects.create(post=self.post, author='Jack', text='Good post', rating=4)
+        Comment.objects.create(post=self.post, author='Adam', text='Nice!', rating=5)
+        response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
+        self.assertContains(response, 'Good post')
+        self.assertContains(response, 'Nice!')
+
+    def test_display_information_about_no_comments(self):
+        response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
+        self.assertContains(response, 'There are no comment\'s yet.')
+
+    def test_post_method_to_post_detail_creating_object(self):
+        self.assertEquals(Comment.objects.count(), 0)
+        self.client.post(f'/{self.post.id}/{self.post.slug}/',
+                         data={'post': self.post,
+                               'author': 'John',
+                               'text': 'Test',
+                               'rating': 2})
+        self.assertEquals(Comment.objects.count(), 1)
+
+    def test_information_about_added_comment(self):
+        self.client.post(f'/{self.post.id}/{self.post.slug}/',
+                                    data={'post': self.post,
+                                          'author': 'Adam',
+                                          'text': 'Test Comment',
+                                          'rating': 2})
+        response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
+        form = CommentForm()
+        self.assertContains(response, 'Your comment has been added.')
+        self.assertNotContains(response, form.as_p())
+
+    def test_user_get_comment_form_if_not_new_comment(self):
+        form = CommentForm()
+        response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
+        self.assertContains(response, form.as_p())
+        self.assertNotContains(response, 'Your comment has been added.')
+
+
+    def test_redirect_to_post_detail_after_comment(self):
+        response = self.client.post(f'/{self.post.id}/{self.post.slug}/',
+                                    data={'post': self.post,
+                                          'author': 'Adam',
+                                          'text': 'Test Comment',
+                                          'rating': 2})
+        self.assertRedirects(response, self.post.get_absolute_url())

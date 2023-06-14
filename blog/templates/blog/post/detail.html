@@ -6,4 +6,26 @@
     {{ post.title }}
     {{ post.created|date:"d-m-Y H:i" }}
     {{ post.text }}
+
+    {% for message in messages %}
+        {{ message|safe }}
+    {% endfor %}
+
+    {% if messages %}
+
+    {% else %}
+        Add new comment
+        <form method="post">
+            {{ form.as_p }}
+            {% csrf_token %}
+            <input type="submit" value="Submit">
+        </form>
+    {% endif %}
+
+    {% for comment in post.comments.all %}
+        Created {{ comment.created|date:"d-m-Y H:i" }} by {{ comment.author }}
+        {{ comment.text }}
+    {% empty %}
+        There are no comment's yet.
+    {% endfor %}
 {% endblock %}

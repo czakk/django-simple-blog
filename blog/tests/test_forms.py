@@ -18,3 +18,9 @@ class TestCommentForm(TestCase):
         comment = CommentForm(data={'post': post, 'author': 'Adam', 'text': 'Good', 'rating': 5})
 
         self.assertTrue(comment.is_valid())
+
+    def test_form_validation_assert_false_when_rating_between_one_and_five(self):
+        post = Post.objects.create(title='Test', author=testing_utils.create_user_john())
+        comment = CommentForm(data={'post': post, 'author': 'Adam', 'text': 'Good', 'rating': 6})
+
+        self.assertFalse(comment.is_valid())

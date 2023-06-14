@@ -56,7 +56,7 @@ class Comment(models.Model):
     rating = models.PositiveSmallIntegerField(choices=ratings, default=5)
 
     class Meta:
-        ordering = ('created', )
+        ordering = ('-created', )
 
     def __str__(self):
         return f'Comment for {self.post} by {self.author}'
