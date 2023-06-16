@@ -1,7 +1,18 @@
 {% extends "blog/base.html" %}
+{% load blog_tags %}
 {% block title %}Home{% endblock %}
 {% block content %}
+    <a href="{% url 'blog:post_add' %}">Add Post</a>
     {% for post in posts %}
          <a href="{{ post.get_absolute_url }}"><h2>{{ post.title }}</h2></a>
+        {{ post.text|truncatewords_html:30 }}
     {% endfor %}
+    <h2>Most rated posts</h2>
+    {% get_the_best_rated_posts as best_rated %}
+    {% for post in best_rated %}
+        {% get_post_avg_rating post as rating %}
+        <a href="{{ post.get_absolute_url }}"><h2>{{ post.title }}</h2></a>  {{ rating|floatformat:2 }}
+    {% endfor %}
+
+    {% include "pagination.html" with page=posts %}
 {% endblock %}

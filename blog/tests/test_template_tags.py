@@ -16,3 +16,21 @@ class TestTags(TestCase):
         self.assertEquals(tags.get_post_avg_rating(post), 3.0)
         Comment.objects.create(post=post, author='Chris', rating=4)
         self.assertEquals(tags.get_post_avg_rating(post), 3.25)
+
+    def test_get_the_best_rated_posts(self):
+        user = testing_utils.create_user_john()
+        most_rated = Post.objects.create(author=user, title='1')
+        last_rated = Post.objects.create(author=user, title='3')
+        second_rated = Post.objects.create(author=user, title='2')
+        additional = Post.objects.create(author=user, title='4')
+        Comment.objects.create(post=most_rated, rating=5)
+        Comment.objects.create(post=second_rated, rating=4)
+        Comment.objects.create(post=last_rated, rating=3)
+        Comment.objects.create(post=additional, rating=1)
+
+        ranking = tags.get_the_best_rated_posts(count=3)
+        self.assertEquals(ranking[0], most_rated)
+        self.assertEquals(ranking[1], second_rated)
+        self.assertEquals(ranking[2], last_rated)
+        with self.assertRaises(IndexError):
+            print(ranking[3])

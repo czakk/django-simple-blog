@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}{% endblock %}</title>
+    <link href="{% static "css/base.css" %}" rel="stylesheet">
 </head>
 <body>
     {% if messages %}
@@ -16,6 +17,7 @@
           {% endfor %}
         </ul>
     {% endif %}
+    <a href="{% url 'blog:homepage' %}"><h1>Simple-Blog</h1></a>
     {% block content %}{% endblock %}
 </body>
 </html>
