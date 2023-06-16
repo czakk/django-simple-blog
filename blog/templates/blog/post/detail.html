@@ -1,4 +1,5 @@
 {% extends "blog/base.html" %}
+{% load blog_tags %}
 
 {% block title %}{{ post.title }}{% endblock %}
 
@@ -6,14 +7,14 @@
     {{ post.title }}
     {{ post.created|date:"d-m-Y H:i" }}
     {{ post.text }}
-
-    {% for message in messages %}
-        {{ message|safe }}
-    {% endfor %}
-
-    {% if messages %}
-
+    {% get_post_avg_rating post as avg_rating %}
+    {% if avg_rating %}
+        Average rating: {{ avg_rating|floatformat:2 }}
     {% else %}
+        No ratings
+    {% endif %}
+
+    {% if not messages %}
         Add new comment
         <form method="post">
             {{ form.as_p }}
@@ -22,9 +23,10 @@
         </form>
     {% endif %}
 
-    {% for comment in post.comments.all %}
+    {% for comment in comments %}
         Created {{ comment.created|date:"d-m-Y H:i" }} by {{ comment.author }}
         {{ comment.text }}
+        Rating: {{ comment.rating }}
     {% empty %}
         There are no comment's yet.
     {% endfor %}

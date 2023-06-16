@@ -24,3 +24,4 @@ class TestCommentForm(TestCase):
         comment = CommentForm(data={'post': post, 'author': 'Adam', 'text': 'Good', 'rating': 6})
 
         self.assertFalse(comment.is_valid())
+

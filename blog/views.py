@@ -1,9 +1,10 @@
 from django.contrib import messages
+from django.contrib.auth.models import AnonymousUser, User
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 
-from .forms import CommentForm
+from .forms import CommentForm, PostForm
 from .models import Post
 
 
@@ -26,7 +27,7 @@ def homepage(request):
 
 def post_detail(request, id, slug):
     post = get_object_or_404(Post, id=id, slug=slug, status='published')
-    new_comment = None
+    comments = post.comments.filter(active=True)
 
     if request.method == 'POST':
         form = CommentForm(data=request.POST)
@@ -44,4 +45,35 @@ def post_detail(request, id, slug):
                   'blog/post/detail.html',
                   {'post': post,
                    'form': form,
-                   'new_comment': new_comment})
+                   'comments': comments})
+
+def post_add(request):
+    if request.method == 'POST':
+        form = PostForm(data=request.POST)
+        if form.is_valid():
+            new_post = form.save(commit=False)
+
+            if isinstance(request.user, User):
+                new_post.author = request.user
+            else:
+                try:
+                    new_post.author = User.objects.get(username='Guest')
+                except User.DoesNotExist:
+                    new_post.author = User.objects.create(username='Guest')
+
+            messages.success(request, 'Your post has been added!')
+
+            if new_post.author.is_staff:
+                new_post.status = 'published'
+                new_post.save()
+                return redirect(new_post)
+
+            new_post.save()
+            messages.info(request, 'Your post is pending and waiting on staff acceptation.')
+
+            return redirect('blog:homepage')
+    else:
+        form = PostForm()
+    return render(request,
+                  'blog/post/new.html',
+                  {'form': form})

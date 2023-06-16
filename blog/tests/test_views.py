@@ -2,10 +2,10 @@ import blog.tests.testing_utils as testing_utils
 import unittest
 
 from blog.models import Post, Comment
-from blog.forms import CommentForm
+from blog.forms import CommentForm, PostForm
 
 from django.test import TestCase
-
+from django.contrib.auth.models import User
 
 # Create your tests here.
 
@@ -82,6 +82,7 @@ class TestPostDetail(TestCase):
         response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
         self.assertContains(response, f'Created {comment.created.strftime("%d-%m-%Y %H:%M")} by {comment.author}')
         self.assertContains(response, comment.text)
+        self.assertContains(response, f'Rating: {comment.rating}')
 
     def test_comments_display_on_post_detail(self):
         Comment.objects.create(post=self.post, author='Jack', text='Good post', rating=4)
@@ -103,7 +104,7 @@ class TestPostDetail(TestCase):
                                'rating': 2})
         self.assertEquals(Comment.objects.count(), 1)
 
-    def test_information_about_added_comment(self):
+    def test_success_message_after_add_comment(self):
         self.client.post(f'/{self.post.id}/{self.post.slug}/',
                                     data={'post': self.post,
                                           'author': 'Adam',
@@ -128,3 +129,77 @@ class TestPostDetail(TestCase):
                                           'text': 'Test Comment',
                                           'rating': 2})
         self.assertRedirects(response, self.post.get_absolute_url())
+
+    def test_display_only_active_comments(self):
+        Comment.objects.create(post=self.post, author='John', text='Great post!')
+        Comment.objects.create(post=self.post, author='John', text='Banned words', active=False)
+        response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
+        self.assertContains(response, 'Great post!')
+        self.assertNotContains(response, 'Banned words')
+
+    def test_there_is_no_avg_rating_if_no_ratings(self):
+        response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
+        self.assertContains(response, 'No ratings')
+        self.assertNotContains(response, 'Average rating:')
+    def test_post_avg_rating_on_detail_page(self):
+        Comment.objects.create(post=self.post, rating=3)
+        Comment.objects.create(post=self.post, rating=5)
+        Comment.objects.create(post=self.post, rating=2)
+        response = self.client.get(f'/{self.post.id}/{self.post.slug}/')
+        self.assertContains(response, "Average rating: 3.33")
+
+
+class TestPostAdd(TestCase):
+    def setUp(self):
+        self.user = testing_utils.create_user_john()
+
+    def test_is_post_new_use_post_new_template(self):
+        response = self.client.get('/new/')
+        self.assertTemplateUsed(response, 'blog/post/new.html')
+
+    def test_post_new_page_display_new_post_form(self):
+        response = self.client.get('/new/')
+        form = PostForm()
+        self.assertContains(response, form.as_p())
+
+    def test_view_can_create_object_if_form_is_valid(self):
+        self.assertEquals(Post.objects.count(), 0)
+        self.client.post('/new/', data={'title': 'Test Title', 'text': 'Test'})
+        self.assertEquals(Post.objects.count(), 1)
+
+    def test_if_user_authenticated_then_author_will_be_user(self):
+        self.client.force_login(self.user)
+        self.client.post(self.client.post('/new/', data={'title': 'Test', 'text': 'Test'}))
+        self.assertEquals(Post.objects.first().author, self.user)
+
+
+    def test_if_anonymous_user_create_post_then_author_will_be_guest_user_model(self):
+        self.client.post(self.client.post('/new/',
+                                          data={'title': 'Test',
+                                                'text': 'Test'}))
+        guest = User.objects.get(username='Guest')
+        self.assertEquals(Post.objects.first().author, guest)
+
+    def test_if_guest_add_post_then_status_will_be_pending_and_dont_be_displayed(self):
+        self.client.post(self.client.post('/new/',
+                                          data={'title': 'Test',
+                                                'text': 'Test'}))
+        post = Post.objects.first()
+        response = self.client.get(post.get_absolute_url())
+
+        self.assertEquals(response.status_code, 404)
+
+    def test_if_user_is_staff_post_instantly_published(self):
+        staff_user = User.objects.create(username='Josh', is_staff=True)
+        self.client.force_login(staff_user)
+        self.client.post(self.client.post('/new/', data={'title': 'Test', 'text': 'test'}))
+        self.assertEquals(Post.objects.first().status, 'published')
+
+    def test_view_redirect_to_post_detail_after_adding_post_if_user_is_staff(self):
+        staff_user = User.objects.create(username='Josh', is_staff=True)
+        self.client.force_login(staff_user)
+        response = self.client.post('/new/', data={'title': 'Test', 'text': 'test'})
+        self.assertRedirects(response, Post.objects.first().get_absolute_url())
+
+
+
