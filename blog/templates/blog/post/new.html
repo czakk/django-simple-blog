@@ -1,9 +1,14 @@
 {% extends "blog/base.html" %}
+{% load tailwind_filters %}
+
 {% block title %}Add Post{% endblock %}
+
 {% block content %}
+    <span class="text-green-700 font-bold text-3xl">Add new post</span>
     <form method="post">
-        {{ form.as_p }}
+        {{ form|crispy }}
         {% csrf_token %}
-        <input type="submit" value="Submit">
+        <input type="submit" value="Submit" style="background: #15803d; padding: 7px; color:white;
+                    margin-top: 5px; border-radius: 10px">
     </form>
 {% endblock %}

@@ -2,17 +2,20 @@
 {% load blog_tags %}
 {% block title %}Home{% endblock %}
 {% block content %}
-    <a href="{% url 'blog:post_add' %}">Add Post</a>
-    {% for post in posts %}
-         <a href="{{ post.get_absolute_url }}"><h2>{{ post.title }}</h2></a>
-        {{ post.text|truncatewords_html:30 }}
-    {% endfor %}
-    <h2>Most rated posts</h2>
-    {% get_the_best_rated_posts as best_rated %}
-    {% for post in best_rated %}
-        {% get_post_avg_rating post as rating %}
-        <a href="{{ post.get_absolute_url }}"><h2>{{ post.title }}</h2></a>  {{ rating|floatformat:2 }}
-    {% endfor %}
-
-    {% include "pagination.html" with page=posts %}
+    <div class="grid gap-2">
+        <a href="{% url 'blog:post_add' %}" class="place-self-start bg-green-700 rounded-full p-2 font-medium">Add
+            Post</a>
+        {% for post in posts %}
+            <div class="bg-zinc-950 p-2 rounded-md drop-shadow-xl xl:h-28 lg:h-36 auto-rows-min">
+                 <a href="{{ post.get_absolute_url }}" class="text-green-700 text-3xl font-bold col-span-1">
+                     {{ post.title }} <span class="text-lg">by {{ post.author }}</span>
+                 </a><br>
+                <span class="italic text-neutral-400 self-end">{{ post.created|date:"d M Y" }}</span>
+                <p class="break-all">
+                    {{ post.text|truncatechars:30 }}
+                </p>
+            </div>
+        {% endfor %}
+        {% include "pagination.html" with page=posts %}
+    </div>
 {% endblock %}

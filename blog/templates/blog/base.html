@@ -1,12 +1,22 @@
-{% load static %}
+{% load static tailwind_tags %}
+{% load blog_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %}</title>
-    <link href="{% static "css/base.css" %}" rel="stylesheet">
+    {% tailwind_css %}
+    <style>
+        select ~ .pointer-events-none {
+            display: none !important;
+        }
+        input[type="submit"] {
+            cursor: pointer;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-zinc-900 text-white">
     {% if messages %}
         <ul class="messages">
           {% for message in messages %}
@@ -17,7 +27,32 @@
           {% endfor %}
         </ul>
     {% endif %}
-    <a href="{% url 'blog:homepage' %}"><h1>Simple-Blog</h1></a>
-    {% block content %}{% endblock %}
+    <nav class="grid h-14 border-b-4 border-b-green-700 content-center">
+        <a class="text-3xl md:m-3" href="{% url 'blog:homepage' %}"><h1>Simple-Blog</h1></a>
+    </nav>
+
+    <div class="grid grid-cols-2 xl:grid-cols-3 gap-5 min-h-screen">
+        <div class="col-span-2 rows-span-full xl:p-8 md:p-6 m-1">
+            {% block content %}{% endblock %}
+        </div>
+
+        <div class="grid lg:rounded-lg p-2 auto-rows-min justify-items-center h-96
+                    border-2 border-green-700 xl:w-80 xl:mt-2 col-span-2 xl:col-span-1">
+            <span class="text-green-700 font-bold text-2xl">Best rated posts</span>
+            {% get_the_best_rated_posts as best_rated %}
+            <ol class="list-decimal">
+            {% for post in best_rated %}
+                {% get_post_avg_rating post as rating %}
+                <li>
+                    <a class="font-light text-lg" href="{{ post.get_absolute_url }}">
+                        {{ post.title|truncatechars:20 }}
+                        <span class="italic">Rating: {{ rating|floatformat:2 }}</span>
+                    </a>
+                </li>
+            {% endfor %}
+            </ol>
+        </div>
+    </div>
+
 </body>
 </html>

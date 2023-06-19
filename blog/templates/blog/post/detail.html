@@ -1,33 +1,46 @@
 {% extends "blog/base.html" %}
 {% load blog_tags %}
+{% load tailwind_filters %}
 
 {% block title %}{{ post.title }}{% endblock %}
 
 {% block content %}
-    {{ post.title }}
-    {{ post.created|date:"d-m-Y H:i" }}
-    {{ post.text }}
-    {% get_post_avg_rating post as avg_rating %}
-    {% if avg_rating %}
-        Average rating: {{ avg_rating|floatformat:2 }}
-    {% else %}
-        No ratings
-    {% endif %}
+    <main class="grid gap-2">
+        <div class="grid">
+            <span class="text-green-700 font-bold text-3xl">{{ post.title }}</span>
+            <span class="italic text-gray">{{ post.created|date:"d-m-Y H:i" }}</span>
+            <p>{{ post.text }}</p>
+            {% get_post_avg_rating post as avg_rating %}
+            <br>
+            {% if avg_rating %}
+                Average rating: {{ avg_rating|floatformat:2 }}
+            {% else %}
+                No ratings
+            {% endif %}
+        </div>
+        <div>
 
-    {% if not messages %}
-        Add new comment
-        <form method="post">
-            {{ form.as_p }}
-            {% csrf_token %}
-            <input type="submit" value="Submit">
-        </form>
-    {% endif %}
-
-    {% for comment in comments %}
-        Created {{ comment.created|date:"d-m-Y H:i" }} by {{ comment.author }}
-        {{ comment.text }}
-        Rating: {{ comment.rating }}
-    {% empty %}
-        There are no comment's yet.
-    {% endfor %}
+            {% if not messages %}
+                <span class="text-green-700 font-bold text-3xl">Add new comment</span>
+                <form method="post">
+                    {{ form|crispy }}
+                    {% csrf_token %}
+                    <input type="submit" value="Submit" style="background: #15803d; padding: 7px; color:white;
+                    margin-top: 5px; border-radius: 10px">
+                </form>
+            {% endif %}
+            <div class="grid gap-2">
+                <span class="text-green-700 font-bold text-3xl">Comments</span>
+                {% for comment in comments %}
+                    <div class="grid bg-zinc-950 p-2 rounded-md drop-shadow-xl">
+                        <span>Created {{ comment.created|date:"d-m-Y H:i" }} by {{ comment.author }}</span>
+                        <p>{{ comment.text }}</p>
+                        Rating: {{ comment.rating }}
+                    </div>
+                {% empty %}
+                    There are no comment's yet.
+                {% endfor %}
+            </div>
+        </div>
+    </main>
 {% endblock %}
