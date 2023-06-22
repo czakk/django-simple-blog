@@ -54,12 +54,15 @@ def post_add(request):
             new_post = form.save(commit=False)
 
             if isinstance(request.user, User):
-                new_post.author = request.user
+                user = request.user
             else:
-                try:
-                    new_post.author = User.objects.get(username='Guest')
-                except User.DoesNotExist:
-                    new_post.author = User.objects.create(username='Guest')
+                user = User.objects.get_or_create(username='Guest')[0]
+                # try:
+                #     new_post.author = User.objects.get(username='Guest')
+                # except User.DoesNotExist:
+                #     new_post.author = User.objects.create(username='Guest')
+
+            new_post.author = user
 
             messages.success(request, 'Your post has been added!')
 
