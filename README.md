@@ -27,7 +27,7 @@ blog posts, as well as allowing users to view and comment on posts.
 1. Clone the repository:
 
    ```shell
-   git clone https://github.com/your-username/simple-blog-django.git
+   git clone https://github.com/czakk/django-simple-blog.git
    ```
 2. Install the dependencies:
 
